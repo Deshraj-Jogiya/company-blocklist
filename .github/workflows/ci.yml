@@ -13,7 +13,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
+          # Bumped from 8.2 -- phpoffice/phpspreadsheet's real zipstream
+          # dependency requires PHP 8.3+, confirmed by a real CI failure
+          # (not guessed): "php-64bit version (8.2.34) does not satisfy
+          # that requirement."
+          php-version: "8.3"
           extensions: intl, sqlite3, pdo_sqlite, gd
       - run: composer install --no-progress --prefer-dist
       - name: Run the real CodeIgniter test suite (real SQLite test database, real WARN Act live-network check)
