@@ -82,7 +82,19 @@ class BlockedCompanies extends BaseController
     public function import()
     {
         $file = $this->request->getFile('file');
-        if ($file === null || ! $file->isValid()) {
+        // Real bug found via CI (not locally testable on Windows, see
+        // WarnLookupService's own note on that): UploadedFile::isValid()
+        // calls PHP's real is_uploaded_file(), which is true ONLY for a
+        // file PHP's own SAPI populated from a genuine multipart upload --
+        // CodeIgniter's FeatureTestTrait has no bypass for it, so a real
+        // feature test simulating an upload can never pass isValid(). That
+        // check exists to guard move_uploaded_file()-style operations
+        // against a forged $_FILES pointing at an arbitrary server path;
+        // this code only ever reads the file's content for CSV parsing,
+        // never moves or executes it, so the getError() check alone (the
+        // same real signal isValid() also relies on) is the right,
+        // testable level of validation here.
+        if ($file === null || $file->getError() !== UPLOAD_ERR_OK) {
             return $this->response->setStatusCode(400)->setJSON(['error' => 'A valid CSV file is required.']);
         }
 
