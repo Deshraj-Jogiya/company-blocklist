@@ -14,9 +14,9 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.2"
-          extensions: intl, sqlite3, pdo_sqlite
+          extensions: intl, sqlite3, pdo_sqlite, gd
       - run: composer install --no-progress --prefer-dist
-      - name: Run the real CodeIgniter feature tests (real SQLite test database)
+      - name: Run the real CodeIgniter test suite (real SQLite test database, real WARN Act live-network check)
         env:
           CI_ENVIRONMENT: testing
-        run: ./vendor/bin/phpunit tests/feature/BlockedCompaniesTest.php --testdox
+        run: ./vendor/bin/phpunit --testdox
