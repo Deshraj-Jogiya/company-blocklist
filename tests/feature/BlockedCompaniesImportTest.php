@@ -24,19 +24,29 @@ final class BlockedCompaniesImportTest extends CIUnitTestCase
 
     private function uploadCsv(string $contents): array
     {
+        // Real bug found via CI: CodeIgniter's FileCollection reads
+        // uploaded files through the framework's own Superglobals
+        // service (service('superglobals')->getFilesArray()), which
+        // keeps its OWN internal copy rather than reading the raw
+        // $_FILES superglobal directly -- setting $_FILES manually is
+        // silently invisible to it. The real, correct way to simulate a
+        // file upload in a feature test is through the service's own
+        // setFilesArray().
         $tempPath = tempnam(sys_get_temp_dir(), 'blocklist_import_');
         file_put_contents($tempPath, $contents);
 
-        $_FILES['file'] = [
-            'name' => 'companies.csv',
-            'type' => 'text/csv',
-            'tmp_name' => $tempPath,
-            'error' => 0,
-            'size' => strlen($contents),
-        ];
+        service('superglobals')->setFilesArray([
+            'file' => [
+                'name' => 'companies.csv',
+                'type' => 'text/csv',
+                'tmp_name' => $tempPath,
+                'error' => 0,
+                'size' => strlen($contents),
+            ],
+        ]);
 
         $result = $this->post('blocked-companies/import');
-        unset($_FILES['file']);
+        service('superglobals')->setFilesArray([]);
 
         return json_decode($result->getJSON(), true);
     }
